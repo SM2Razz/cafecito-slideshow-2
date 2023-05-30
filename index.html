@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Nunito&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" integrity="sha512-Fo3rlrZj/k7ujTnHg4CGR2D7kSs0v4LLanw2qksYuRlEzO+tcaEPQogQ0KaoGN26/zrn20ImR1DfuLWnOo7aBA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+  <link rel="stylesheet" href="styles.css">
+  <script src="https://cdn.jsdelivr.net/npm/vue@2/dist/vue.js"></script>
+  <script src="https://unpkg.com/dayjs@1.8.21/dayjs.min.js"></script>
+  <title>Time and Weather</title>
+</head>
+<body>
+
+  <div id="app">
+    <div id="displayParent">
+      <!-- comments! and more comments -->
+
+      <div class="grayBoxDisplay" v-if="showCalendar">
+        <div class="monthNameAndToggles">
+          <button
+            @click="monthInc--"
+          ><i class="fa-solid fa-circle-chevron-left"></i></button>
+          <h2>{{ monthName }}</h2>
+          <button
+            @click="monthInc++"
+          ><i class="fa-solid fa-circle-chevron-right"></i></button>
+        </div>
+        <div class="weekRow">
+          <div class="dayCell weekdayCell" v-for="day in weekdays">{{ day }}</div>
+        </div>
+          <div class="weekRow" v-for="week in getCalendar">
+            <div
+              class="dayCell"
+              v-for="dayObj in week"
+              :style="getDayColor(dayObj)"
+            >{{ dayObj.day }}</div>
+          </div>
+
+      </div>
+
+      <div class="grayBoxDisplay" v-if="fiveDayForecast.length">
+        <p v-if="showFiveDay" class="forecastHeader">Five Day Forecast</p>
+        <div v-if="showFiveDay" id="forecastDays">
+
+          <div v-for="day in fiveDayForecast" class="forecastTile">
+            <p class="somePadding">{{ day.date }}</p>
+            <p class="noPadding">
+              <span :style="{ color: day.high.darkCol }">
+                Hi:
+              </span>
+              <span :style="{ color: day.high.col }">
+                {{ day.high.temp }}
+              </span>
+            </p>
+            <p class="noPadding">
+              <span :style="{ color: day.low.darkCol }">
+                Lo:
+              </span>
+              <span :style="{ color: day.low.col }">
+                {{ day.low.temp }}
+              </span>
+            </p>
+            <p class="noPadding">
+              <span>
+                💧:
+              </span>
+              <span :style="{ backgroundColor: 'darkblue', color: 'aliceblue', borderRadius: '5px', padding: '3px' }">
+                {{ day.humidity }}
+              </span>
+            </p>
+            <p
+              :style="{ color: 'ghostwhite' }"
+              class="somePadding"
+            >{{ day.desc }}</p>
+
+          </div>
+        </div>
+      </div>
+
+
+      <div id="tempDisplay">
+        <div class="iconHolder">
+          <p :style="{ color: current.darkCol, padding: 0, margin: '0.25rem' }">updated {{ lastWeatherUpdate }}</p>
+        </div>
+        <p class="temp" :style="{ color: current.col }">{{ current.temp }}°</p>
+        <img class="tinyWeatherIcon" :src=`./icons/${weatherIcon}.png` alt="weatherIcon">
+        <div class="iconHolder">
+          <p>{{ weatherDesc }}</p>
+        </div>
+        <div id="forecast">
+          <p class="noPadding">
+            <span>
+                💧:
+            </span>
+            <span :style="{ backgroundColor: 'darkblue', color: 'aliceblue', borderRadius: '5px', padding: '3px' }">
+                {{ humidity }}
+            </span>
+          </p>
+          <p class="noPadding">
+            <span :style="{ color: high.darkCol }">
+              High:
+            </span>
+            <span :style="{ color: high.col }">
+              {{ high.temp }}
+            </span>
+          </p>
+          <p class="noPadding">
+            <span :style="{ color: low.darkCol }">
+              Low:
+            </span>
+            <span :style="{ color: low.col }">
+              {{ low.temp }}
+            </span>
+          </p>
+        </div>
+      </div>
+
+      <div id="timeBox">
+        <button class="toggleButton" @click="toggleCalendar">
+          <i :class='showCalendar ? "fa-solid fa-calendar" : "fa-solid fa-calendar-days"'></i>
+        </button>
+        <button id="forecastToggle" class="toggleButton" @click="toggleFiveDay">
+          <i :class='!showFiveDay ? "fa fa-caret-up" : "fa fa-caret-down"'></i>
+        </button>
+        <h1 id="timeDisplay">
+          <span :style="{ color: darkCol }">{{ fullDate }}</span> ::
+          <span :style="{ color: lightCol }"> {{ fullTime }}</span>
+        </h1>
+      </div>
+
+    </div>
+  </div>
+
+  <!--
+  https://api.weatherbit.io/v2.0/current?lat=30.7952&lon=-97.5882&units=I&key=19c20a36a784405a97760c579ec97c5c
+  30.7952,-97.5882
+  Weatherbit API key: 19c20a36a784405a97760c579ec97c5c
+
+  OpenWeather API key: 620f2611f43b97a36b9b922bb3db54bf
+  WORKING API call: https://api.openweathermap.org/data/2.5/onecall?lat=30.79&lon=-97.58&exclude=hourly,minutely&appid=620f2611f43b97a36b9b922bb3db54bf&units=Imperial
+  -->
+
+
+  <script>
+    let app = new Vue({
+      el: '#app',
+      data: {
+        wbitApiUrl: "https://api.weatherbit.io/v2.0/current?lat=30.7952&lon=-97.5882&units=I&key=19c20a36a784405a97760c579ec97c5c",
+        openApiUrl: "https://api.openweathermap.org/data/2.5/onecall?lat=30.79&lon=-97.58&exclude=hourly,minutely&appid=620f2611f43b97a36b9b922bb3db54bf&units=Imperial",
+        fullTime: "0:00",
+        lightCol: "rgba(255, 255, 255, 1)", // for times
+        darkCol: "rgba(255, 255, 255, 0.5)", // for times
+        lastWeatherUpdate: "0:00",
+        weatherIcon: "c04n",
+        weatherDesc: "",
+        humidity: '',
+
+        current: {},
+        high: {},
+        low: {},
+        fiveDayForecast: [],
+        showFiveDay: true,
+        showCalendar: true,
+        weekdays: ["Sun", "Mon", "Tue", "Wed", "Ths", "Fri", "Sat"],
+        months: [
+          "January", "February", "March", "April", "May", "June", "July",
+          "August", "September", "October", "November", "December"
+        ],
+        monthInc: 0,
+      },
+      methods: {
+        fetchWeatherIcon() {
+          fetch(this.wbitApiUrl)
+            .then(res => res.json())
+            .then(data => {
+              let weatherData = data.data[0];
+              // just get weather ICON from weatherbit API
+              this.weatherIcon = weatherData.weather.icon;
+            });
+        },
+        fetchTempAndForecast() {
+          fetch(this.openApiUrl)
+            .then(res => res.json())
+            .then(data => {
+              let forecastData = data;
+              this.lastWeatherUpdate = new Date(Date.now()).toLocaleTimeString();
+
+              this.getTemps(forecastData);
+              this.getFiveDayForecast(forecastData);
+              console.log(forecastData);
+            });
+        },
+
+        getTemps(forecastData){
+          this.weatherDesc = forecastData.daily[0].weather[0].description;
+          let currTemp = parseInt(forecastData.current.temp);
+          let hiTemp = parseInt(forecastData.daily[0].temp.max);
+          let loTemp = parseInt(forecastData.daily[0].temp.min);
+
+          this.current = {
+            temp: currTemp,
+            col: this.getTempCol(currTemp, 1),
+            darkCol: this.getTempCol(currTemp, 0.5)
+          };
+          this.high = {
+            temp: hiTemp,
+            col: this.getTempCol(hiTemp, 1),
+            darkCol: this.getTempCol(hiTemp, 0.5)
+          };
+          this.low = {
+            temp: loTemp,
+            col: this.getTempCol(loTemp, 1),
+            darkCol: this.getTempCol(loTemp, 0.5)
+          };
+          this.humidity = forecastData.current.humidity;
+        },
+
+        getFiveDayForecast(forecastData) {
+          this.fiveDayForecast = []; // clear forecast data
+          for (let i = 1; i < 6; i++) { // gather hi/lo temp forecast for next 5 days
+            let dailyHi = parseInt(forecastData.daily[i].temp.max);
+            let dailyLo = parseInt(forecastData.daily[i].temp.min);
+            let weatherForecastObj = {
+              date: dayjs.unix(forecastData.daily[i].dt).format('ddd MM/DD'),
+              desc: forecastData.daily[i].weather[0].description,
+              humidity: forecastData.daily[i].humidity,
+              high: {
+                temp: dailyHi,
+                col: this.getTempCol(dailyHi, 1),
+                darkCol: this.getTempCol(dailyHi, 0.5),
+              },
+              low: {
+                temp: dailyLo,
+                col: this.getTempCol(dailyLo, 1),
+                darkCol: this.getTempCol(dailyLo, 0.5),
+              }
+            };
+            this.fiveDayForecast.push(weatherForecastObj);
+          }
+        },
+
+        getTempCol(temp, opac) {
+          if (temp <  33) return `rgba(255, 255, 255, ${opac})`; // below 33 is white
+          if (temp >= 33 && temp < 40) return `rgba(230, 200, 240, ${opac})`; // 33-40: palest purple
+          if (temp >= 40 && temp < 45) return `rgba(200, 150, 255, ${opac})`; // 40-45: light purple
+          if (temp >= 45 && temp < 50) return `rgba(150, 150, 255, ${opac})`; // 45-50: light blue-purple
+          if (temp >= 50 && temp < 55) return `rgba(100, 204, 255, ${opac})`; // 50-55: light blue
+          if (temp >= 55 && temp < 60) return `rgba(0, 255, 255, ${opac})`; // 55-60: aqua
+          if (temp >= 60 && temp < 65) return `rgba(0, 255, 150, ${opac})`; // 60-65: aqua-green
+          if (temp >= 65 && temp < 70) return `rgba(0, 255, 50, ${opac})`; // 65-70: green
+          if (temp >= 70 && temp < 75) return `rgba(204, 255, 50, ${opac})`; // 70-75: green-yellow
+          if (temp >= 75 && temp < 80) return `rgba(255, 255, 0, ${opac})`; // 75-80: yellow
+          if (temp >= 80 && temp < 85) return `rgba(255, 204, 0, ${opac})`; // 80-85: yellow-orange
+          if (temp >= 85 && temp < 90) return `rgba(255, 154, 0, ${opac})`; // 85-90: orange
+          if (temp >= 90 && temp < 95) return `rgba(255, 104, 0, ${opac})`; // 90-95: reddish-orange
+          if (temp >= 95) return `rgba(255, 0, 0, ${opac})`; // 95-100: red
+        },
+        getTimeCol(hour, opac) {
+          if (hour === "7") return `rgba(255, 0, 102, ${opac})`;
+          if (hour === "8") return `rgba(255, 153, 51, ${opac})`;
+          if (hour === "9") return `rgba(255, 255, 0, ${opac})`;
+          if (hour === "10") return `rgba(153, 255, 51, ${opac})`;
+          if (hour === "11") return `rgba(0, 255, 204, ${opac})`;
+          if (hour === "12") return `rgba(0, 204, 255, ${opac})`;
+          if (hour === "1") return `rgba(153, 153, 255, ${opac})`;
+          if (hour === "2") return `rgba(255, 153, 255, ${opac})`;
+          if (hour === "3") return `rgba(255, 0, 102, ${opac})`;
+          return `rgba(255, 255, 255, ${opac})`;
+        },
+        toggleFiveDay() {
+          this.showFiveDay = !this.showFiveDay;
+        },
+        toggleCalendar() {
+          this.showCalendar = !this.showCalendar;
+        },
+        getDayColor(dayObj) {
+          if (dayObj.isWeekend) return { color: '#0099ff' };
+          if (dayObj.isToday) return { color: 'gold', border: '1px solid gold' };
+          return { color: '#99d6ff' };
+        },
+      },
+      computed: {
+        fullDate() {
+          let d = new Date(Date.now()).toLocaleDateString("en-US", { weekday: 'short', month: 'short', day: 'numeric' });
+          return d.replace(",", "");
+        },
+        getCalendar() {
+          const today = dayjs().add(this.monthInc, 'month'); // get today's date, in current/next/prev month
+          const numDays = today.daysInMonth(); // get days in current month
+          let dayOfFirst = today.date(1).day(); // which day of the week the 1st falls on (for March, is 2 for Tues)
+          let calMatrix = [];
+          for (let i = 0; i < 6; i++) { // create 3d array matrix (6 arrays, each w/ 7 elements)
+            calMatrix.push(Array.from({length: 7}, () => false));
+          }
+          let week = 0;
+          let dayOfWeek = parseInt(dayOfFirst); // start at the weekday of the 1st day of the month
+          for (let i = 1; i <= numDays; i++) { // loop over days in month, starting at 1
+            if (dayOfWeek > 6) { // if we've gone beyond the last day of the week
+              week++; // jump to new week
+              dayOfWeek = 0; // reset dayOfWeek to 0
+            }
+            let isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
+            let isToday = this.monthInc === 0 && dayjs().date() === i;
+            calMatrix[week][dayOfWeek] = {day: i, isWeekend, isToday};
+            dayOfWeek++; // move on to next dayOfWeek
+          }
+          if (calMatrix[5].every(elem => !elem)) {
+            calMatrix.pop(); // remove final week, if empty
+          }
+          return calMatrix;
+        },
+        monthName() {
+          const numOfMonth = dayjs().add(this.monthInc, 'month').month();
+          return this.months[numOfMonth];
+        },
+      },
+      created() {
+        console.log(this.currMonth);
+        setInterval(() => {
+          // set time every second
+          let time = new Date(Date.now()).toLocaleTimeString();
+          let hour = time.slice(0, time.indexOf(":"));
+          this.lightCol = this.getTimeCol(hour, 1);
+          this.darkCol = this.getTimeCol(hour, 0.6);
+          this.fullTime = time;
+        }, 1000)
+        this.fetchWeatherIcon(); // call fetchWeatherIcon to get just weather icon from Weatherbit
+        this.fetchTempAndForecast(); // call fetchTempAndForecast to get temp + forecast from OpenWeather API
+        setInterval(() => {
+          this.fetchTempAndForecast(); // set interval to refresh temp + forecast data every 5m/300,000ms
+        }, 300000);
+      },
+    })
+
+
+  </script>
+</body>
+</html>

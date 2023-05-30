@@ -1,0 +1,161 @@
+html, body {
+  color: rgba(255,255,255,0.7);
+  background-color: black;
+  font-family: 'Nunito', sans-serif;
+  box-sizing: border-box;
+  padding: 0;
+  margin: 0;
+  height: 100%;
+}
+#app {
+  width: 100%;
+  height: 100%;
+}
+#displayParent {
+  margin: 0;
+  padding: 0;
+  position: absolute;
+  bottom: 5px;
+  right: 10px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  justify-content: center;
+}
+.grayBoxDisplay {
+  border-radius: 10px;
+  background-color: rgba(255,255,255,0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  min-width: 300px;
+  margin-top: 10px;
+}
+.monthNameAndToggles {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+}
+.monthNameAndToggles > button {
+  color: gray;
+  background-color: black;
+  border-radius: 50%;
+  font-size: 1.5rem;
+  margin: 5px 10px;
+  height: 35px;
+  border: none;
+  cursor: pointer;
+}
+.monthNameAndToggles > button:hover {
+  color: ghostwhite;
+}
+.monthNameAndToggles > h2 {
+  color: ghostwhite;
+}
+.weekRow {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  margin: 0 20px;
+}
+.weekRow:last-child {
+  margin-bottom: 10px;
+}
+.dayCell {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 50px;
+  height: 40px;
+  background-color: black;
+  border-radius: 5px;
+  margin: 2px;
+}
+.weekdayCell {
+  color: gray;
+}
+.forecastHeader {
+  padding: 0.25rem;
+  margin: 0.25rem;
+  color: ghostwhite;
+  font-size: 1.25rem;
+}
+#forecastDays {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-evenly;
+}
+.forecastTile {
+  background-color: black;
+  border-radius: 15px;
+  padding: 0.5rem;
+  margin: 0.5rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+.toggleButton {
+  background-color: black;
+  color: white;
+  font-size: 1.5rem;
+  font-weight: bold;
+  margin: 0.25rem;
+  height: 35px;
+}
+.toggleButton:hover {
+  color: black;
+  background-color: grey;
+  cursor: pointer;
+}
+.iconHolder {
+  width: 75px;
+  text-align: center;
+  margin: 0.25rem;
+}
+.iconHolder p {
+  padding: 0;
+  margin: 0.25rem;
+}
+.tinyWeatherIcon {
+  height: 50px;
+  width: 50px;
+}
+#tempDisplay {
+  display: flex;
+  flex-direction: row;
+  align-items: flex-end;
+  justify-content: center;
+}
+.temp {
+  font-size: 3rem;
+  margin: 0 5px;
+}
+#forecast {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  margin: 3px;
+}
+.noPadding {
+  padding: 0;
+  margin: 0;
+}
+.somePadding {
+  padding: 2px;
+  margin: 2px;
+}
+#timeDisplay {
+  margin: 2px 5px;
+}
+#timeBox {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+}
